@@ -5,7 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/pion/rtwatch/gst"
-	"github.com/pion/webrtc/v2"
+	"github.com/pion/webrtc/v3"
 )
 
 type GSTProducer struct {
