@@ -1,6 +1,7 @@
 package webm
 
 import (
+	"io"
 	"log"
 	"math"
 	"math/rand"
@@ -14,7 +15,6 @@ import (
 )
 
 type WebMProducer struct {
-	name          string
 	stop          bool
 	paused        bool
 	pauseChan     chan bool
@@ -26,7 +26,7 @@ type WebMProducer struct {
 	webm          webm.WebM
 	trackMap      map[uint]*trackInfo
 	videoCodec    string
-	file          *os.File
+	file          io.ReadSeeker
 }
 
 func NewMFileProducer(name string, offset int, ts producer.TrackSelect) *WebMProducer {
@@ -34,6 +34,10 @@ func NewMFileProducer(name string, offset int, ts producer.TrackSelect) *WebMPro
 	if err != nil {
 		log.Fatal("unable to open file", name)
 	}
+	return NewMReadSeekerProducer(r, offset, ts)
+}
+
+func NewMReadSeekerProducer(r io.ReadSeeker, offset int, ts producer.TrackSelect) *WebMProducer {
 	var w webm.WebM
 	reader, err := webm.Parse(r, &w)
 	if err != nil {
@@ -41,7 +45,6 @@ func NewMFileProducer(name string, offset int, ts producer.TrackSelect) *WebMPro
 	}
 
 	fileReader := &WebMProducer{
-		name:          name,
 		offsetSeconds: offset,
 		reader:        reader,
 		webm:          w,
