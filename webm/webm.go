@@ -80,12 +80,20 @@ func (t *WebMProducer) SeekP(ts int) {
 	t.seekChan <- seekDuration
 }
 
+func (t *WebMProducer) SeekDuration(ts time.Duration) {
+	t.seekChan <- ts
+}
+
 func (t *WebMProducer) Pause(pause bool) {
 	t.pauseChan <- pause
 }
 
 func (t *WebMProducer) VideoCodec() string {
 	return t.videoCodec
+}
+
+func (t *WebMProducer) Duration() time.Duration {
+	return t.webm.GetDuration()
 }
 
 type trackInfo struct {
