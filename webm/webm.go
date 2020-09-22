@@ -49,7 +49,7 @@ func NewMReadSeekerProducer(r io.ReadSeeker, offset int, ts producer.TrackSelect
 		reader:        reader,
 		webm:          w,
 		file:          r,
-		pauseChan:     make(chan bool),
+		pauseChan:     make(chan bool, 1),
 		seekChan:      make(chan time.Duration, 1),
 	}
 
