@@ -4,7 +4,6 @@ import (
 	"io"
 	"log"
 	"math"
-	"math/rand"
 	"os"
 	"time"
 
@@ -19,8 +18,8 @@ type WebMProducer struct {
 	paused        bool
 	pauseChan     chan bool
 	seekChan      chan time.Duration
-	videoTrack    *webrtc.Track
-	audioTrack    *webrtc.Track
+	videoTrack    *webrtc.TrackLocalStaticSample
+	audioTrack    *webrtc.TrackLocalStaticSample
 	offsetSeconds int
 	reader        *webm.Reader
 	webm          webm.WebM
@@ -58,11 +57,11 @@ func NewMReadSeekerProducer(r io.ReadSeeker, offset int, ts producer.TrackSelect
 	return fileReader
 }
 
-func (t *WebMProducer) AudioTrack() *webrtc.Track {
+func (t *WebMProducer) AudioTrack() *webrtc.TrackLocalStaticSample {
 	return t.audioTrack
 }
 
-func (t *WebMProducer) VideoTrack() *webrtc.Track {
+func (t *WebMProducer) VideoTrack() *webrtc.TrackLocalStaticSample {
 	return t.videoTrack
 }
 
@@ -97,36 +96,28 @@ func (t *WebMProducer) Duration() time.Duration {
 }
 
 type trackInfo struct {
-	track         *webrtc.Track
+	track         *webrtc.TrackLocalStaticSample
 	rate          int
 	lastFrameTime time.Duration
 }
 
 func (t *WebMProducer) buildTracks(ts producer.TrackSelect) {
-	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	trackMap := make(map[uint]*trackInfo)
 
 	if ts.Video {
 		if vidTrack := t.webm.FindFirstVideoTrack(); vidTrack != nil {
 			log.Println("Video codec", vidTrack.CodecID)
 
-			var vidCodedID uint8
 			switch vidTrack.CodecID {
 			case "V_VP8":
-				vidCodedID = webrtc.DefaultPayloadTypeVP8
-				t.videoCodec = webrtc.VP8
+				t.videoCodec = "video/vp8"
 			case "V_VP9":
-				vidCodedID = webrtc.DefaultPayloadTypeVP9
-				t.videoCodec = webrtc.VP9
+				t.videoCodec = "video/vp9"
 			default:
 				log.Fatal("Unsupported video codec", vidTrack.CodecID)
 			}
 
-			videoTrack, err := pc.NewTrack(vidCodedID, rand.Uint32(), "video", "video")
+			videoTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: t.videoCodec, ClockRate: 90000}, "video", "pion")
 			if err != nil {
 				panic(err)
 			}
@@ -138,7 +129,7 @@ func (t *WebMProducer) buildTracks(ts producer.TrackSelect) {
 
 	if ts.Audio {
 		if audTrack := t.webm.FindFirstAudioTrack(); audTrack != nil {
-			audioTrack, err := pc.NewTrack(webrtc.DefaultPayloadTypeOpus, rand.Uint32(), "audio", "video")
+			audioTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: "audio/opus", ClockRate: 48000, Channels: 2}, "video", "pion")
 			if err != nil {
 				panic(err)
 			}
@@ -227,13 +218,13 @@ func (t *WebMProducer) readLoop() {
 			}
 
 			// Calc frame time diff per track
-			diff := pck.Timecode - track.lastFrameTime
-			ms := float64(diff.Milliseconds()) / 1000.0
-			samps := uint32(float64(track.rate) * ms)
+			// diff := pck.Timecode - track.lastFrameTime
+			// ms := float64(diff.Milliseconds()) / 1000.0
+			// samps := uint32(float64(track.rate) * ms)
 			track.lastFrameTime = pck.Timecode
 
 			// Send samples
-			if ivfErr := track.track.WriteSample(media.Sample{Data: pck.Data, Samples: samps}); ivfErr != nil {
+			if ivfErr := track.track.WriteSample(media.Sample{Data: pck.Data}); ivfErr != nil {
 				log.Println("Track write error", ivfErr)
 			}
 		}

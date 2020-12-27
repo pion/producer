@@ -3,7 +3,6 @@ package ivf
 import (
 	"io"
 	"log"
-	"math/rand"
 	"os"
 	"time"
 
@@ -16,18 +15,13 @@ type IVFProducer struct {
 	name    string
 	stop    bool
 	Samples chan media.Sample
-	Track   *webrtc.Track
+	Track   *webrtc.TrackLocalStaticSample
 	offset  int
 }
 
 func NewIVFProducer(name string, offset int) *IVFProducer {
-	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Create track
-	videoTrack, err := pc.NewTrack(webrtc.DefaultPayloadTypeVP8, rand.Uint32(), "video", "video")
+	videoTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeVP8, ClockRate: 90000}, "video", "pion")
 	if err != nil {
 		panic(err)
 	}
@@ -40,11 +34,11 @@ func NewIVFProducer(name string, offset int) *IVFProducer {
 	}
 }
 
-func (t *IVFProducer) AudioTrack() *webrtc.Track {
+func (t *IVFProducer) AudioTrack() *webrtc.TrackLocalStaticSample {
 	return nil
 }
 
-func (t *IVFProducer) VideoTrack() *webrtc.Track {
+func (t *IVFProducer) VideoTrack() *webrtc.TrackLocalStaticSample {
 	return t.Track
 }
 
@@ -63,7 +57,7 @@ func (t *IVFProducer) Start() {
 }
 
 func (t *IVFProducer) VideoCodec() string {
-	return webrtc.VP8
+	return webrtc.MimeTypeVP8
 }
 
 func (t *IVFProducer) ReadLoop() {
@@ -108,7 +102,7 @@ func (t *IVFProducer) ReadLoop() {
 		}
 
 		time.Sleep(sleepTime)
-		if ivfErr = t.Track.WriteSample(media.Sample{Data: frame, Samples: 90000}); ivfErr != nil {
+		if ivfErr = t.Track.WriteSample(media.Sample{Data: frame}); ivfErr != nil {
 			log.Println("Track write error", ivfErr)
 		}
 	}

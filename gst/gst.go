@@ -2,44 +2,30 @@ package gst
 
 import (
 	"log"
-	"math/rand"
 
-	"github.com/pion/rtwatch/gst"
 	"github.com/pion/webrtc/v3"
 )
 
 type GSTProducer struct {
 	name       string
-	audioTrack *webrtc.Track
-	videoTrack *webrtc.Track
-	pipeline   *gst.Pipeline
+	audioTrack *webrtc.TrackLocalStaticSample
+	videoTrack *webrtc.TrackLocalStaticSample
+	pipeline   *Pipeline
 	paused     bool
 }
 
 func NewGSTProducer(path string) *GSTProducer {
-
-	pc, err := webrtc.NewPeerConnection(webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{
-			{
-				URLs: []string{"stun:stun.l.google.com:19302"},
-			},
-		},
-	})
+	videoTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264, ClockRate: 90000}, "video", "pion")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	videoTrack, err := pc.NewTrack(webrtc.DefaultPayloadTypeH264, rand.Uint32(), "synced-video", "synced-video")
+	audioTrack, err := webrtc.NewTrackLocalStaticSample(webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeOpus, ClockRate: 48000, Channels: 2}, "audio", "pion")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	audioTrack, err := pc.NewTrack(webrtc.DefaultPayloadTypeOpus, rand.Uint32(), "synced-audio", "synced-video")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	pipeline := gst.CreatePipeline(path, audioTrack, videoTrack)
+	pipeline := CreatePipeline(path, audioTrack, videoTrack)
 
 	return &GSTProducer{
 		videoTrack: videoTrack,
@@ -48,11 +34,11 @@ func NewGSTProducer(path string) *GSTProducer {
 	}
 }
 
-func (t *GSTProducer) AudioTrack() *webrtc.Track {
+func (t *GSTProducer) AudioTrack() *webrtc.TrackLocalStaticSample {
 	return t.audioTrack
 }
 
-func (t *GSTProducer) VideoTrack() *webrtc.Track {
+func (t *GSTProducer) VideoTrack() *webrtc.TrackLocalStaticSample {
 	return t.videoTrack
 }
 
@@ -76,5 +62,5 @@ func (t *GSTProducer) Start() {
 }
 
 func (t *GSTProducer) VideoCodec() string {
-	return webrtc.H264
+	return webrtc.MimeTypeH264
 }
