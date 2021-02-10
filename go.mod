@@ -8,5 +8,5 @@ require (
 	github.com/petar/GoLLRB v0.0.0-20190514000832-33fb24c13b99 // indirect
 	github.com/pion/rtwatch v0.0.0-20200910062812-4008305038ed
 	github.com/pion/webrtc/v2 v2.2.26
-	github.com/pion/webrtc/v3 v3.0.0-beta.5
+	github.com/pion/webrtc/v3 v3.0.7
 )
