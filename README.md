@@ -1,26 +1,8 @@
-## File Producers
+# Deprecated
 
-A set of file playback producers that write to `webrtc.Track`(s).
+This repo has been deprecated. If you are interested in sending static content via WebRTC you have some of the following options.
 
-### Producers  
-
-gst: gstreamer supported codecs - [rtwatch](https://github.com/pion/rtwatch)
-
-ivf: vp8 playback from [play-from-disk](https://github.com/pion/webrtc/tree/master/examples/play-from-disk)
-
-webm: direct file playback with vp8 or vp9 + ogg
-
-### Usage
-
-Producers support the following interface.
-
-```
-type IFileProducer interface {
-	VideoTrack() *webrtc.Track
-	VideoCodec() string
-	AudioTrack() *webrtc.Track
-	Stop()
-	Start()
-}
-
-```
+* [rtwatch](https://github.com/pion/rtwatch) is a demonstration of how to use GStreamer in memory
+* [rtp-forwarder](https://github.com/pion/webrtc/tree/master/examples/rtp-forwarder) shows how to forward a RTP stream. You can create this RTP stream using ffmpeg, GStreamer or other tool of your choice.
+* [play-from-disk](https://github.com/pion/webrtc/tree/master/examples/play-from-disk) shows how to play VP8 + Opus from a file
+* [awesome-pion](https://github.com/pion/awesome-pion) has multiple 3rd party tools that consume external sources.
